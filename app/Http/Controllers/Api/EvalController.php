@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Models\Employee;
 use App\Models\Evaluation;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Validator;
+
 
 class EvalController extends Controller
 {
@@ -35,30 +37,32 @@ class EvalController extends Controller
             'projectName' => 'required|string|max:191',
             'evalPeriod' => 'required|string|max:191',
             'workLoc' => 'required|string|max:191',
-            'projectMembers' => 'required|string|max:191',
+            'employee_id' => 'required|exists:employees,id', // Validate that employee_id exists in the employees table
         ]);
 
-        if($validator->fails()){
+        if ($validator->fails()) {
             return response()->json([
                 'status' => 422,
                 'errors' => $validator->errors()
-            ],422);
-        }else{
+            ], 422);
+        } else {
+            // Fetch the employee name based on the provided employee_id
+            $employee = Employee::findOrFail($request->employee_id);
+            $employeeName = $employee->name;
 
             $eval = Evaluation::create([
                 'projectName' => $request->projectName,
                 'evalPeriod' => $request->evalPeriod,
                 'workLoc' => $request->workLoc,
-                'projectMembers' => $request->projectMembers,
+                'projectMembers' => $employeeName, // Assign the employee name to projectMembers
             ]);
 
-            if($eval){
+            if ($eval) {
                 return response()->json([
                     'status' => 200,
                     'message' => "indexEval created Successfully"
                 ], 200);
-            }else{
-
+            } else {
                 return response()->json([
                     'status' => 500,
                     'message' => "Something went wrong"
